@@ -1,0 +1,59 @@
+!pip install google-genai
+import os
+from google.colab import userdata
+
+os.environ['GOOGLE_API_KEY'] = userdata.get('GOOGLE_API_KEY')
+from google import genai
+
+client = genai.Client()
+modelo = "gemini-2.0-flash"
+from google.genai import types
+analista_de_roteiro = types.GenerateContentConfig(
+    system_instruction = """Você é um analista de roteiro de vídeos para youtube e seu objetivo é analizar o quão envolvente e chamativo esse roteiro é de acordo com os dados atuais sobre o público alvo desse vídeos e as informações do YouTube e de sites do Google. O usuário enviara o roteiro para você e você dará uma nota de 0 a 10 avaliando as subdivisões: chamativo; retenção; interessante; atual. Você também deverá dar ideias de Thumbnails para o vídeo, de título, descrição, tags, e horário para postar o vídeo. Crie um novo roteiro bem detalhado e que funcione com o público do vídeo fazendo as alterações necessárias e inclua ideias de edição na nova versão.
+    O novo roteiro deve ser 10/10 em todos os quesitos das subdivisões antes citadas. No final da avaliação insira a mensagem "se quiser uma nova sugestão, clique no botão "analizar roteiro" novamente". Caso a pessoa pedir uma ideia sobre determinado tema ao invés de inserir um roteiro, você deverá buscar informações na internet sobre quais são os conteúdos mais virais sobre aquele tema e mostrar 5 sugestões de temas para um vídeo. Se o usuário não determinar o tema, você dará 5 sugestões sobre os assuntos mais virais da internet atualmente.""",
+)
+
+chat = client.chats.create(model=modelo, config=analista_de_roteiro)
+
+from IPython.display import HTML, Markdown
+from IPython.display import display, HTML
+import ipywidgets as widgets
+
+script_input = widgets.Textarea(
+    value='',
+    placeholder='Cole o seu roteiro, insira "quero criar um roteiro sobre: (seu tema)" ou peça uma sugestão aqui...',
+    description='Roteiro:',
+    disabled=False,
+    layout=widgets.Layout(width='80%', height='300px')
+)
+
+
+analyze_button = widgets.Button(
+    description='Resposta',
+    disabled=False,
+    button_style='success',
+    tooltip='Clique para analisar o roteiro',
+    icon='check'
+)
+
+
+output_area = widgets.Output()
+
+
+def analista_de_roteiro(b):
+    with output_area:
+        output_area.clear_output()
+        script = script_input.value
+        if script:
+            print("Preparando resposta...")
+           
+            response = chat.send_message(script) 
+            display(Markdown(response.text)) 
+        else:
+            print("Por favor, cole o roteiro na caixa de texto.")
+
+
+analyze_button.on_click(on_analyze_button_clicked)
+
+
+display(script_input, analyze_button, output_area)
